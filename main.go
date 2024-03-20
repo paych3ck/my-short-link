@@ -67,6 +67,25 @@ func checkUser(db *sql.DB, email, password string) (bool, error) {
 }
 
 func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == "GET" {
+			tmpl, err := template.ParseFiles("index.html")
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+
+			err = tmpl.Execute(w, nil)
+
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+			}
+		} else if r.Method == "POST" {
+			fmt.Println("test")
+		}
+	})
+
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			tmpl, err := template.ParseFiles("login.html")

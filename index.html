@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        #inputGroup {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #inputGroup input {
+            margin-right: 10px;
+        }
+
+        #buttons {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        button,
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+        }
+
+        #output {
+            height: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <form id="inputForm" method="post">
+        <div id="inputGroup">
+            <input type="text" id="textInput" name="text" placeholder="Введите текст здесь">
+            <button type="submit">Показать</button>
+        </div>
+    </form>
+    <div id="output"></div>
+    <div id="buttons">
+        <form action="/login">
+            <button type="submit">Войти</button>
+        </form>
+        <form action="/register">
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <script>
+        function showText() {
+            var input = document.getElementById("textInput").value;
+            document.getElementById("output").innerText = input;
+        }
+    </script>
+
+</body>
+
+</html>
