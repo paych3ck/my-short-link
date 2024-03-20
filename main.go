@@ -6,8 +6,11 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+
+	"golang.org/x/crypto/bcrypt"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -17,6 +20,20 @@ type Config struct {
 	DbPassword string `json:"dbPassword"`
 	DbHost     string `json:"dbHost"`
 	DbName     string `json:"dbName"`
+}
+
+func generatePasswordHash(password string) string {
+	passwordBytes := []byte(password)
+	cost := 10
+	hash, _ := bcrypt.GenerateFromPassword(passwordBytes, cost)
+	return string(hash)
+}
+
+func checkPasswordHash(password string, hashedPassword string) bool {
+	passwordBytes := []byte(password)
+	hashedPasswordBytes := []byte(hashedPassword)
+	err := bcrypt.CompareHashAndPassword(hashedPasswordBytes, passwordBytes)
+	return err == nil
 }
 
 func connectDB() *sql.DB {
@@ -44,6 +61,15 @@ func connectDB() *sql.DB {
 	return db
 }
 
+func createBind(db *sql.DB, alias string, url string) error {
+	_, err := db.Exec("INSERT INTO urls(alias, url) VALUES(?, ?)", alias, url)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func registerUser(db *sql.DB, email, password string) error {
 	_, err := db.Exec("INSERT INTO users(email, password) VALUES(?, ?)", email, password)
 
@@ -63,7 +89,18 @@ func checkUser(db *sql.DB, email, password string) (bool, error) {
 		return false, nil
 	}
 
-	return password == dbPassword, nil
+	return checkPasswordHash(password, dbPassword), nil
+}
+
+func generateShortUrl(length int) string {
+	const symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	bytes := make([]byte, length)
+
+	for i := range bytes {
+		bytes[i] = symbols[rand.Intn(len(symbols))]
+	}
+
+	return "https://myshl.ru/" + string(bytes)
 }
 
 func main() {
@@ -144,7 +181,7 @@ func main() {
 			db := connectDB()
 			defer db.Close()
 
-			registerUser(db, email, password)
+			registerUser(db, email, generatePasswordHash(password))
 		}
 	})
 
