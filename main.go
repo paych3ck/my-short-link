@@ -80,6 +80,10 @@ func registerUser(db *sql.DB, email, password string) error {
 	return nil
 }
 
+func sendEmail(to, subject, body string) {
+	//TODO: SEND EMAIL HERE
+}
+
 func checkUser(db *sql.DB, email, password string) (bool, error) {
 	var dbPassword string
 	err := db.QueryRow("SELECT password FROM users WHERE email = ?", email).Scan(&dbPassword)
@@ -104,6 +108,10 @@ func generateShortUrl(length int) string {
 }
 
 func main() {
+	fs := http.FileServer(http.Dir("static"))
+
+	http.Handle("/static/", http.StripPrefix("/static/", fs))
+
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "GET" {
 			tmpl, err := template.ParseFiles("index.html")
@@ -118,9 +126,22 @@ func main() {
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
-		} else if r.Method == "POST" {
-			fmt.Println("test")
 		}
+	})
+
+	http.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
+		var requestData struct {
+			URL string `json:"url"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&requestData); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+
+		db := connectDB()
+		defer db.Close()
+		shortUrl := generateShortUrl(3)
+		createBind(db, shortUrl, requestData.URL)
+		json.NewEncoder(w).Encode(map[string]string{"shortUrl": shortUrl})
 	})
 
 	http.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
