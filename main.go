@@ -9,6 +9,7 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 
@@ -96,6 +97,18 @@ func checkUser(db *sql.DB, email, password string) (bool, error) {
 	return checkPasswordHash(password, dbPassword), nil
 }
 
+func getUrl(db *sql.DB, alias string) (string, error) {
+	var url string
+	err := db.QueryRow("SELECT url FROM urls WHERE alias = ?", alias).Scan(&url)
+
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	return url, nil
+}
+
 func generateShortUrl(length int) string {
 	const symbols = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 	bytes := make([]byte, length)
@@ -113,20 +126,35 @@ func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", fs))
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			tmpl, err := template.ParseFiles("index.html")
+		if r.URL.Path == "/" {
+			if r.Method == "GET" {
+				tmpl, err := template.ParseFiles("index.html")
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+					return
+				}
+
+				err = tmpl.Execute(w, nil)
+
+				if err != nil {
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
+			}
+		} else {
+			alias := strings.TrimPrefix(r.URL.Path, "/")
+
+			db := connectDB()
+			defer db.Close()
+			url, err := getUrl(db, alias)
 
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
+				fmt.Println("error")
 			}
 
-			err = tmpl.Execute(w, nil)
-
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-			}
+			http.Redirect(w, r, url, http.StatusFound)
 		}
+
 	})
 
 	http.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
