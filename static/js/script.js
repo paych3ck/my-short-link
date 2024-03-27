@@ -9,7 +9,7 @@ document.getElementById('shortenBtn').addEventListener('click', function () {
     })
         .then(response => response.json())
         .then(data => {
-            document.getElementById('shortUrl').textContent = data.shortUrl;
+            document.getElementById('shortUrl').textContent = 'https://myshl.ru/' + data.shortUrl;
         })
         .catch((error) => {
             console.error('Error:', error);
