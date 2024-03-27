@@ -117,7 +117,8 @@ func generateShortUrl(length int) string {
 		bytes[i] = symbols[rand.Intn(len(symbols))]
 	}
 
-	return "https://myshl.ru/" + string(bytes)
+	//return "https://myshl.ru/" + string(bytes)
+	return string(bytes)
 }
 
 func main() {
@@ -152,9 +153,8 @@ func main() {
 				fmt.Println("error")
 			}
 
-			http.Redirect(w, r, url, http.StatusFound)
+			http.Redirect(w, r, url, http.StatusMovedPermanently)
 		}
-
 	})
 
 	http.HandleFunc("/shorten", func(w http.ResponseWriter, r *http.Request) {
